@@ -3,6 +3,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import javax.imageio.ImageIO;
 
@@ -26,7 +27,9 @@ public class ImageMosquitoes {
 			int numPixelsVertical = image.getHeight();
 			int[][] clasificacionPorZonas = new int[numPixelsHoritzontal][numPixelsVertical];
 			String colorEnHex = "";
-			ArrayList<Integer>[/* x */][/* y */] colorFotPixel = new ArrayList[numPixelsHoritzontal][numPixelsVertical];
+			ArrayList<Integer>[/* x */][/* y */] colorForPixel = new ArrayList[numPixelsHoritzontal][numPixelsVertical];
+			ArrayList<HashMap<Integer, Integer>> zonasDeBichos = new ArrayList<HashMap<Integer, Integer>>();
+			boolean[][] pixelEnZona = new boolean [numPixelsHoritzontal][numPixelsVertical];
 			for (int coordenadaX = 0; coordenadaX < numPixelsHoritzontal; coordenadaX++) {
 				for (int coordenadaY = 0; coordenadaY < numPixelsVertical; coordenadaY++) {
 					c = image.getRGB(coordenadaX, coordenadaY);
@@ -43,15 +46,22 @@ public class ImageMosquitoes {
 					/**
 					 * guardar en arayList
 					 */
-					colorFotPixel[coordenadaX][coordenadaY].add(red);
-					colorFotPixel[coordenadaX][coordenadaY].add(green);
-					colorFotPixel[coordenadaX][coordenadaY].add(blue);
-					colorFotPixel[coordenadaX][coordenadaY].add(max);
-					colorFotPixel[coordenadaX][coordenadaY].add(min);
-					colorFotPixel[coordenadaX][coordenadaY].add(hue);
-					colorFotPixel[coordenadaX][coordenadaY].add(luminosidad);
-					colorFotPixel[coordenadaX][coordenadaY].add(saturacion);
-
+					colorForPixel[coordenadaX][coordenadaY] = new ArrayList<Integer>();
+					colorForPixel[coordenadaX][coordenadaY].add(red);
+					colorForPixel[coordenadaX][coordenadaY].add(green);
+					colorForPixel[coordenadaX][coordenadaY].add(blue);
+					colorForPixel[coordenadaX][coordenadaY].add(max);
+					colorForPixel[coordenadaX][coordenadaY].add(min);
+					colorForPixel[coordenadaX][coordenadaY].add(hue);
+					colorForPixel[coordenadaX][coordenadaY].add(luminosidad);
+					colorForPixel[coordenadaX][coordenadaY].add(saturacion);
+					clasificacionPorZonas[coordenadaX][coordenadaY] = obtenerZona(hue, luminosidad, saturacion);
+					pixelEnZona[coordenadaX][coordenadaY] = false;
+				}
+			}
+			for (int coordenadaX = 0; coordenadaX < numPixelsHoritzontal; coordenadaX++) {
+				for (int coordenadaY = 0; coordenadaY < numPixelsVertical; coordenadaY++) {
+					delimitarZonaDeBichos(pixelEnZona, coordenadaX, coordenadaY, clasificacionPorZonas);
 				}
 			}
 		} catch (IOException e) {
@@ -154,13 +164,78 @@ public class ImageMosquitoes {
 		}
 		return zona;
 	}
+	
+
+	public static void delimitarZonaDeBichos (boolean[][] pixelEnZona, Integer coordenadaX, Integer coordenadaY, int[][] clasificacionPorZonas) {
+		HashMap<Integer, Integer> zonaBichos = new HashMap<Integer, Integer>();
+		int limitInferiorX;
+		int limitSuperiorX;
+		int limitInferiorY;
+		int limitSuperiorY;
+
+		if (coordenadaX==0 && coordenadaY==0) {
+			limitInferiorX=coordenadaX;
+			limitInferiorY=coordenadaY;
+			limitSuperiorX = coordenadaX +1;
+			limitSuperiorY = coordenadaY +1;
+		} else if (coordenadaX==0 && coordenadaY!=pixelEnZona[0].length && coordenadaY!=0) {
+			limitInferiorX=coordenadaX;
+			limitInferiorY=coordenadaY-1;
+			limitSuperiorX = coordenadaX +1;
+			limitSuperiorY = coordenadaY +1;
+		} else if (coordenadaX==0 && coordenadaY==pixelEnZona[0].length) {
+			limitInferiorX=coordenadaX;
+			limitInferiorY=coordenadaY-1;
+			limitSuperiorX = coordenadaX +1;
+			limitSuperiorY = coordenadaY;
+		} else if (coordenadaX==pixelEnZona.length && coordenadaY==0) {
+			limitInferiorX=coordenadaX-1;
+			limitInferiorY=coordenadaY;
+			limitSuperiorX = coordenadaX;
+			limitSuperiorY = coordenadaY +1;
+		} else if (coordenadaX==pixelEnZona.length && coordenadaY!=pixelEnZona[0].length && coordenadaY!=0) {
+			limitInferiorX=coordenadaX-1;
+			limitInferiorY=coordenadaY-1;
+			limitSuperiorX = coordenadaX;
+			limitSuperiorY = coordenadaY +1;
+		} else if (coordenadaX==pixelEnZona.length && coordenadaY==pixelEnZona[0].length) {
+			limitInferiorX=coordenadaX-1;
+			limitInferiorY=coordenadaY-1;
+			limitSuperiorX = coordenadaX;
+			limitSuperiorY = coordenadaY;
+		} else if (coordenadaX!=pixelEnZona.length && coordenadaX!=0 && coordenadaY==0) {
+			limitInferiorX=coordenadaX-1;
+			limitInferiorY=coordenadaY;
+			limitSuperiorX = coordenadaX+1;
+			limitSuperiorY = coordenadaY+1;
+		} else if (coordenadaX!=pixelEnZona.length && coordenadaX!=0 && coordenadaY!=pixelEnZona[0].length && coordenadaY!=0) {
+			limitInferiorX=coordenadaX-1;
+			limitInferiorY=coordenadaY-1;
+			limitSuperiorX = coordenadaX+1;
+			limitSuperiorY = coordenadaY +1;
+		} else if (coordenadaX==pixelEnZona.length && coordenadaY==pixelEnZona[0].length) {
+			limitInferiorX=coordenadaX-1;
+			limitInferiorY=coordenadaY-1;
+			limitSuperiorX = coordenadaX;
+			limitSuperiorY = coordenadaY;
+		}
+		for (int i=coordenadaX-1; i<=coordenadaX+1; i++) {
+			for (int j=coordenadaY-1; j<=coordenadaY+1; j++) {
+				if (!(i==coordenadaX && j==coordenadaY)) {
+					if (clasificacionPorZonas[i][j]==1 && pixelEnZona[i][j]==false) {//Si ese pixel forma parte de un bicho y no lo hemos añadido a la zona
+						pixelEnZona[i][j] = true;
+						zonaBichos.put(i, j);
+						delimitarZonaDeBichos(pixelEnZona, i, j, clasificacionPorZonas);
+					}
+				}
+			}
+		}
+	}
 
 	/**
 	 * TODO: interfaz simple
 	 * 
-	 * TODO: añadir la imagen
-	 * 
-	 * TODO: analizar imagen con puntos de mosquitos 
+	 * TODO: añadir las imagen
 	 * 
 	 * TODO: analizar lineas devolver
 	 * 
