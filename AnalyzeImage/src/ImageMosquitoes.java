@@ -24,6 +24,7 @@ public class ImageMosquitoes {
 			int saturacion;
 			int numPixelsHoritzontal = image.getWidth();
 			int numPixelsVertical = image.getHeight();
+			int[][] clasificacionPorZonas = new int[numPixelsHoritzontal][numPixelsVertical];
 			String colorEnHex = "";
 			ArrayList<Integer>[/* x */][/* y */] colorFotPixel = new ArrayList[numPixelsHoritzontal][numPixelsVertical];
 			for (int coordenadaX = 0; coordenadaX < numPixelsHoritzontal; coordenadaX++) {
@@ -127,6 +128,31 @@ public class ImageMosquitoes {
 			System.out.println("Error al obtener la luminosidad, no es ninguno de los tres casos");
 		}
 		return saturacion;
+	}
+	
+	public static int obtenerZona (int hue, int luminosidad, int saturacion) {
+		//-1 significa fondo
+		//0 significa papel atrapamoscas
+		//1 significa mosquito
+		int zona = 2;
+		if (luminosidad < 85) {
+			if (luminosidad < 40) {
+				zona = 1;
+			} else {
+				if (hue > 47 && hue < 64) {
+					if (saturacion > 55) {
+						zona = 0;
+					} else {
+						zona = 1;
+					}
+				} else {
+					zona = 1;
+				}
+			}
+		} else {
+			zona = -1;
+		}
+		return zona;
 	}
 
 	/**
